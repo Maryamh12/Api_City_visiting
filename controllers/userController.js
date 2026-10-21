@@ -1,7 +1,7 @@
 import User from "../models/user.js";
 import bcrypt from "bcrypt";
 import jwt from "jsonwebtoken";
-import { JWT_SECRET } from "../consts.js";
+import { JWT_SECRET, JWT_EXPIRES_IN } from "../consts.js";
 
 /** POST /register — create a new user account */
 const register = async (req, res, next) => {
@@ -45,7 +45,7 @@ const login = async (req, res, next) => {
     }
 
     const payload = { id: user.id };
-    const token   = jwt.sign(payload, JWT_SECRET, { expiresIn: "7d" });
+    const token   = jwt.sign(payload, JWT_SECRET, { expiresIn: JWT_EXPIRES_IN });
 
     return res.status(200).json({ token, payload });
   } catch (err) {

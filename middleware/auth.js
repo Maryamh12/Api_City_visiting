@@ -16,7 +16,7 @@ const auth = async (req, res, next) => {
     const foundUser = await User.findById(decoded.id).select("id userName email role");
 
     if (!foundUser) {
-      return res.status(403).json({ message: "User not found. Please log in again." });
+      return res.status(401).json({ message: "User not found. Please log in again." });
     }
 
     req.currentUser = foundUser;

@@ -5,11 +5,73 @@ This project utilizes the React framework for the frontend and Node.js for the b
 
 ## Deployed Application
 
-View the deployed site [here](https://citytoure.netlify.app/).
+View the deployed site [here](https://cityvisiting.netlify.app/).
 
-#### Sign up and create new account or try this demo user:
-- Username: mmm4545@email.com
-- Password: mmm454512345
+This repository is the **backend API** (Node.js, Express, MongoDB). The React frontend lives in
+[Maryamh12/App_City_Visiting](https://github.com/Maryamh12/App_City_Visiting).
+
+Sign up to create an account, then browse cities, write stories, like and comment.
+
+## Running the API Locally
+
+```bash
+npm install
+cp .env.example .env      # set DB_CONNECTION_STRING and JWT_SECRET
+npm run seed-db           # 40 cities and ~200 stories
+npm run dev               # http://localhost:4000
+```
+
+### Environment variables
+
+| Variable | Required | Description |
+|---|---|---|
+| `DB_CONNECTION_STRING` | yes (production) | MongoDB connection string (local or Atlas) |
+| `JWT_SECRET` | yes (production) | Long random string used to sign tokens. The server refuses to start in production without it |
+| `JWT_EXPIRES_IN` | no | Token lifetime, default `7d` |
+| `CORS_ORIGIN` | no | Comma-separated allowed frontend origins, e.g. `https://cityvisiting.netlify.app` |
+| `SEED_ADMIN_PASSWORD` | no | Password for the seeded admin account |
+| `NODE_ENV` | no | Set to `production` on the server |
+
+## Running the Tests
+
+```bash
+npm test
+```
+
+26 tests using Node's built-in test runner and Supertest. Database calls are replaced with test
+doubles, so no MongoDB instance is needed. They cover validation, authentication (missing, invalid
+and expired tokens), owner/admin authorisation, protection against mass assignment, regex-safe
+search, and password redaction in logs. GitHub Actions runs them on every push.
+
+## API Endpoints
+
+| Method | Path | Auth | Description |
+|---|---|---|---|
+| POST | `/register` | – | Create an account |
+| POST | `/login` | – | Returns a JWT |
+| GET | `/cats` | – | All cities with their stories |
+| GET | `/cats/:id` | – | One city |
+| POST | `/cats` | ✔ | Create a city |
+| PATCH / DELETE | `/cats/:id` | owner or admin | Update / delete a city |
+| POST | `/search` | – | Find cities by name |
+| POST | `/story/:cityId` | ✔ | Add a story |
+| PATCH / DELETE | `/story/:cityId/:storyId` | owner or admin | Update / delete a story |
+| POST | `/story/:storyId/like` | ✔ | Toggle a like |
+| POST | `/comment/:cityId/:storyId` | ✔ | Add a comment |
+| PATCH / DELETE | `/comment/:cityId/:commentId` | owner or admin | Update / delete a comment |
+
+> The city routes are named `/cats` for historical reasons (the project started from a template); the
+> frontend depends on these paths, so they were kept.
+
+## Security Notes
+
+- Passwords hashed with bcrypt; tokens expire
+- Only whitelisted fields are accepted when creating or updating cities and stories, so a client
+  cannot set `createdBy`, `likes` or `comments` to take over or tamper with content
+- Search input is escaped before being used in a MongoDB regex
+- Request logging redacts passwords and tokens
+- CORS can be restricted to the deployed frontend with `CORS_ORIGIN`
+
 
 
 
@@ -1112,4 +1174,5 @@ const CityCard = ({ city }) => {
     export default UserProfile;
   ```
 
-
+Originally built in 2024 as my General Assembly capstone project (MERN stack). Refactored in 2026: restructured controllers and middleware, added owner/admin authorisation, security hardening and automated tests.
+The  original repository: Maryamh12/Citytour-Api, which contains the full history from 2024.

@@ -485,7 +485,8 @@ const CITIES = [
 
 const seedDatabase = async () => {
   const connStr = process.env.DB_CONNECTION_STRING || "mongodb://localhost:27017/citytour";
-  console.log("\n🔌 Connecting to: " + connStr + "\n");
+  // Only print the host, never the credentials in the connection string
+  console.log("\n🔌 Connecting to: " + connStr.replace(/\/\/[^@]*@/, "//<credentials>@") + "\n");
 
   try {
     await connectToDb();
@@ -495,7 +496,9 @@ const seedDatabase = async () => {
     await User.deleteMany({});
     console.log("🗑️  Cleared existing data");
 
-    const hashedPassword = await bcrypt.hash("Admin1234!", 10);
+    // Set SEED_ADMIN_PASSWORD so a real database never gets a publicly known password
+    const adminPassword  = process.env.SEED_ADMIN_PASSWORD || "Admin1234!";
+    const hashedPassword = await bcrypt.hash(adminPassword, 10);
     const admin = await User.create({
       userName: "admin",
       email:    "admin@citytour.com",
@@ -504,7 +507,7 @@ const seedDatabase = async () => {
     });
     console.log("👤 Admin user created");
     console.log("   Email:    admin@citytour.com");
-    console.log("   Password: Admin1234!\n");
+    console.log("   Password: " + (process.env.SEED_ADMIN_PASSWORD ? "(from SEED_ADMIN_PASSWORD)" : "Admin1234!") + "\n");
 
     const citiesWithOwner = CITIES.map(city => ({
       ...city,
@@ -525,7 +528,7 @@ const seedDatabase = async () => {
     console.log("📖 Inserted " + totalStories + " stories");
     console.log("\n✅ Database seeded successfully!");
     console.log("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
-    console.log("  Login: admin@citytour.com / Admin1234!");
+    console.log("  Login: admin@citytour.com");
     console.log("  Run:   npm run dev");
     console.log("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n");
 

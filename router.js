@@ -12,13 +12,20 @@ const router = express.Router();
 // ── Auth ──────────────────────────────────────────────────────
 router.post(
   "/register",
+  body("userName").trim().isLength({ min: 1, max: 50 }).withMessage("Username is required"),
   body("email").isEmail().withMessage("Must be a valid email"),
   body("role").not().exists().withMessage("Cannot set role directly"),
   body("password").isLength({ min: 8 }).withMessage("Password must be at least 8 characters"),
   validate,
   userController.register
 );
-router.post("/login", userController.login);
+router.post(
+  "/login",
+  body("email").isEmail().withMessage("Must be a valid email"),
+  body("password").isString().notEmpty().withMessage("Password is required"),
+  validate,
+  userController.login
+);
 
 // ── Cities ────────────────────────────────────────────────────
 router.get("/cats",        catController.getAll);
@@ -43,11 +50,17 @@ router.delete("/story/:catId/:storyId",  auth, storyController.remove);
 router.post("/story/:storyId/like",      auth, storyController.liked);
 
 // ── Comments ──────────────────────────────────────────────────
-router.post("/comment/:catId/:storyId",  auth, commentController.create);
+router.post(
+  "/comment/:catId/:storyId",
+  auth,
+  body("text").trim().isLength({ min: 1, max: 1000 }).withMessage("Comment cannot be empty"),
+  validate,
+  commentController.create
+);
 router.patch(
   "/comment/:catId/:commentId",
   auth,
-  body("text").trim().isLength({ min: 1 }).withMessage("Comment cannot be empty"),
+  body("text").trim().isLength({ min: 1, max: 1000 }).withMessage("Comment cannot be empty"),
   validate,
   commentController.update
 );

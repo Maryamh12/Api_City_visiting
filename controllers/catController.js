@@ -1,4 +1,8 @@
 import Cat from "../models/cat.js";
+import { pick, escapeRegex } from "../utils/pick.js";
+
+// Fields a client is allowed to set on a city
+const CITY_FIELDS = ["name", "text", "image"];
 
 /** GET /cats — return all cities */
 const getAll = async (req, res, next) => {
@@ -27,7 +31,7 @@ const getIndividual = async (req, res, next) => {
 /** POST /cats — create a city (auth required) */
 const create = async (req, res, next) => {
   try {
-    const newCity = await Cat.create({ ...req.body, createdBy: req.currentUser.id });
+    const newCity = await Cat.create({ ...pick(req.body, CITY_FIELDS), createdBy: req.currentUser.id });
     return res.status(201).json({ message: "City created.", city: newCity });
   } catch (err) {
     next(err);
@@ -49,7 +53,10 @@ const update = async (req, res, next) => {
       return res.status(403).json({ message: "You can only edit cities you created." });
     }
 
-    const updated = await Cat.findByIdAndUpdate(id, req.body, { returnDocument: "after" });
+    const updated = await Cat.findByIdAndUpdate(id, pick(req.body, CITY_FIELDS), {
+      returnDocument: "after",
+      runValidators: true,
+    });
     return res.status(200).json({ message: "City updated.", city: updated });
   } catch (err) {
     next(err);
@@ -82,12 +89,16 @@ const remove = async (req, res, next) => {
 const search = async (req, res, next) => {
   const { query } = req.body;
 
-  if (!query || !query.trim()) {
+  if (typeof query !== "string" || !query.trim()) {
     return res.status(400).json({ message: "Search query cannot be empty." });
+  }
+  if (query.length > 100) {
+    return res.status(400).json({ message: "Search query is too long." });
   }
 
   try {
-    const results = await Cat.find({ name: { $regex: query.trim(), $options: "i" } });
+    // Escape the user's text so it is matched literally, not run as a regex
+    const results = await Cat.find({ name: { $regex: escapeRegex(query.trim()), $options: "i" } });
 
     if (!results.length) {
       return res.status(404).json({ message: `No city matching "${query}" was found.` });

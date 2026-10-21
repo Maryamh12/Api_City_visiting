@@ -1,4 +1,8 @@
 import Cat from "../models/cat.js";
+import { pick } from "../utils/pick.js";
+
+// Fields a client is allowed to set on a story (not createdBy, likes or comments)
+const STORY_FIELDS = ["name", "image", "description"];
 
 /** POST /story/:catId — add a story to a city */
 const create = async (req, res, next) => {
@@ -11,7 +15,7 @@ const create = async (req, res, next) => {
       return res.status(404).json({ message: `City with id ${catId} not found.` });
     }
 
-    city.storys.push({ ...req.body, createdBy: userId });
+    city.storys.push({ ...pick(req.body, STORY_FIELDS), createdBy: userId });
     await city.save();
 
     return res.status(201).json({ message: "Story created successfully." });
@@ -42,7 +46,7 @@ const update = async (req, res, next) => {
       return res.status(403).json({ message: "You can only edit your own stories." });
     }
 
-    story.set(req.body);
+    story.set(pick(req.body, STORY_FIELDS));
     await city.save();
 
     return res.status(200).json({ message: "Story updated.", story });
